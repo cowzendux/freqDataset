@@ -2,7 +2,7 @@
 Creates a dataset containing the frequencies of a set of variables. Rows in the dataset can be labeled, and the dataset can be appended by issuing the command multiple times, potentially with different labels each time.
 
 ## Usage
-**freqDataset(varList, [datasetName], [datasetLabels])
+** freqDataset(varList, [datasetName], [datasetLabels])
 * "var" is a list of strings indicating the names of the variables whose frequencies you want to calculate.
 * "datasetName" is the name of the SPSS dataset you want to hold the frequencies. By default, the name of the dataset is "Frequencies".
 * "datasetLabels" is an optional argument that identifies a list of strings identifying values that would be applied to the dataset.  This can be useful if you are appending the results from multiple analyses to the same dataset.
