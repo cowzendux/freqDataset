@@ -8,8 +8,8 @@ Creates a dataset containing the frequencies of a set of variables. Rows in the 
 * "datasetLabels" is an optional argument that identifies a list of strings identifying values that would be applied to the dataset.  This can be useful if you are appending the results from multiple analyses to the same dataset.
 
 ## Example
-**freqDataset(varList = ["race", "gender", "grade"],
-datasetName = "Demographics",
+**freqDataset(varList = ["race", "gender", "grade"],   
+datasetName = "Demographics",   
 datasetLabels = ["Fall", "2016"])**
 * This would calculate the frequencies for race, gender, and grade, and then put the results in a dataset named "Demographics". 
 * There would be variables in the Demographics data set for the variable, the value, the frequency corresponding to the value, and two labels. 
