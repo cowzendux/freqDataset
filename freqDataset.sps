@@ -27,23 +27,14 @@ datasetLabels = ["Fall", "2016"])
 * all of the cases added by this command, the value of the first label would
 * be "Fall" and the value of the second label would be "2016".
 
-*******
-* Version History
-*******
-* 2016-12-02 Created
-* 2016-12-02a Modified to work with crosstabs
-* 2016-12-02b Added combinations of extra variables
-* 2016-12-03 Obtained levels of first variable separately for 
-*    each combination of the other variables
-
 set printback off.
-begin program python.
+begin program python3.
 import spss, spssaux
 
 def getVariableIndex(variable):
-   	for t in range(spss.GetVariableCount()):
-      if (variable.upper() == spss.GetVariableName(t).upper()):
-         return(t)
+    for t in range(spss.GetVariableCount()):
+        if variable.upper() == spss.GetVariableName(t).upper():
+            return t
 
 def product(ar_list):
     if not ar_list:
@@ -51,13 +42,13 @@ def product(ar_list):
     else:
         for a in ar_list[0]:
             for prod in product(ar_list[1:]):
-                yield (a,)+prod
+                yield (a,) + prod
 
-def freqDataset(varList, datasetName = "Frequencies", datasetLabels =  []):
-#####
-# Obtain a list of all the possible values
-#####
-# Use the OMS to pull the values from the frequencies command
+def freqDataset(varList, datasetName="Frequencies", datasetLabels=[]):
+    #####
+    # Obtain a list of all the possible values
+    #####
+    # Use the OMS to pull the values from the frequencies command
     varLevels = []
     for var in varList:
         submitstring = """SET Tnumbers=values.
@@ -67,55 +58,55 @@ OMS SELECT TABLES
 FREQUENCIES VARIABLES=%s.
 OMSEND.
 
-SET Tnumbers=Labels.""" %(var)
+SET Tnumbers=Labels.""" % (var)
         spss.Submit(submitstring)
- 
-        handle='freq_table'
-        context="/outputTree"
-#get rows that are totals by looking for varName attribute
-#use the group element to skip split file category text attributes
-        xpath="//group/category[@varName]/@text"
-        values=spss.EvaluateXPath(handle,context,xpath)
-        varLevels.append(values)
-        
-######
-# Identify combinations of later variables
-######
 
-    if (len(varList) == 1):
+        handle = 'freq_table'
+        context = "/outputTree"
+        # Get rows that are totals by looking for varName attribute
+        # Use the group element to skip split file category text attributes
+        xpath = "//group/category[@varName]/@text"
+        values = spss.EvaluateXPath(handle, context, xpath)
+        varLevels.append(values)
+
+    ######
+    # Identify combinations of later variables
+    ######
+
+    if len(varList) == 1:
         comboNum = 1
         valueList = []
     else:
         comboNum = 1
         for t in range(len(varList) - 1):
-            comboNum = comboNum*len(varLevels[t + 1])
+            comboNum = comboNum * len(varLevels[t + 1])
         valueList = list(product(varLevels[1:]))
 
-##########
-# Obtain frequencies & percentages for first variable 
-##########
+    ##########
+    # Obtain frequencies & percentages for first variable
+    ##########
     for combo in range(comboNum):
-        if (comboNum > 1):
+        if comboNum > 1:
             submitstring = """USE ALL.
 COMPUTE filter_$=("""
             for v in range(1, len(varList)):
                 varIndex = getVariableIndex(varList[v])
-                submitstring += "\n" + varList[v] + "=" 
-                if (spss.GetVariableType(varIndex) == 0):
-                    submitstring += valueList[combo][v-1]
+                submitstring += "\n" + varList[v] + "="
+                if spss.GetVariableType(varIndex) == 0:
+                    submitstring += valueList[combo][v - 1]
                 else:
-                    submitstring += "'" + valueList[combo][v-1] + "'"
-                if (v == len(varList)-1):
+                    submitstring += "'" + valueList[combo][v - 1] + "'"
+                if v == len(varList) - 1:
                     submitstring += """).
 FILTER BY filter_$.
 EXECUTE."""
                 else:
                     submitstring += " and"
-            print submitstring
+            print(submitstring)
             spss.Submit(submitstring)
 
-    # Values of main variable within combination
-    # Use the OMS to pull the values from the frequencies command
+        # Values of main variable within combination
+        # Use the OMS to pull the values from the frequencies command
         var = varList[0]
         submitstring = """SET Tnumbers=values.
 OMS SELECT TABLES
@@ -124,51 +115,51 @@ OMS SELECT TABLES
 FREQUENCIES VARIABLES=%s.
 OMSEND.
 
-SET Tnumbers=Labels.""" %(var)
+SET Tnumbers=Labels.""" % (var)
         spss.Submit(submitstring)
- 
-        handle='freq_table'
-        context="/outputTree"
-#get rows that are totals by looking for varName attribute
-#use the group element to skip split file category text attributes
-        xpath="//group/category[@varName]/@text"
-        curvalues=spss.EvaluateXPath(handle,context,xpath)
+
+        handle = 'freq_table'
+        context = "/outputTree"
+        # Get rows that are totals by looking for varName attribute
+        # Use the group element to skip split file category text attributes
+        xpath = "//group/category[@varName]/@text"
+        curvalues = spss.EvaluateXPath(handle, context, xpath)
 
         cmd = """FREQUENCIES VARIABLES={0}
   /ORDER=ANALYSIS.""".format(varList[0])
-        handle,failcode=spssaux.CreateXMLOutput(
-    		cmd,
-    		omsid="Frequencies",
-    		subtype="Frequencies",
-    		visible=False)
-        result=spssaux.GetValuesFromXMLWorkspace(
-    		handle,
-    		tableSubtype="Frequencies",
-    		cellAttrib="text")
+        handle, failcode = spssaux.CreateXMLOutput(
+            cmd,
+            omsid="Frequencies",
+            subtype="Frequencies",
+            visible=False)
+        result = spssaux.GetValuesFromXMLWorkspace(
+            handle,
+            tableSubtype="Frequencies",
+            cellAttrib="text")
 
         fList = []
         pList = []
         vpList = []
         cpList = []
         for v in range(len(curvalues)):
-            fList.append(int(float(result[v*4])))
-            pList.append(float(result[v*4 + 1]))
-            vpList.append(float(result[v*4 +2]))
-            cpList.append(float(result[v*4 +3]))
+            fList.append(int(float(result[v * 4])))
+            pList.append(float(result[v * 4 + 1]))
+            vpList.append(float(result[v * 4 + 2]))
+            cpList.append(float(result[v * 4 + 3]))
         spss.Submit("use all.")
 
-#########
-# Write to data set
-#########
+        #########
+        # Write to data set
+        #########
 
-# Determine active data set so we can return to it when finished
+        # Determine active data set so we can return to it when finished
         activeName = spss.ActiveDataset()
-# Set up data set if it doesn't already exist
-        tag,err = spssaux.createXmlOutput('Dataset Display',
-omsid='Dataset Display', subtype='Datasets')
+        # Set up data set if it doesn't already exist
+        tag, err = spssaux.createXmlOutput('Dataset Display',
+                                           omsid='Dataset Display', subtype='Datasets')
         datasetList = spssaux.getValuesFromXmlWorkspace(tag, 'Datasets')
 
-        if (datasetName not in datasetList):
+        if datasetName not in datasetList:
             spss.StartDataStep()
             datasetObj = spss.Dataset(name=None)
             dsetname = datasetObj.name
@@ -184,28 +175,28 @@ dataset name {1}.""".format(dsetname, datasetName)
             spss.Submit(submitstring)
 
             spss.StartDataStep()
-            datasetObj = spss.Dataset(name = datasetName)
+            datasetObj = spss.Dataset(name=datasetName)
             spss.SetActive(datasetObj)
-    
-    # Label variables
-            variableList =[]
+
+            # Label variables
+            variableList = []
             for t in range(spss.GetVariableCount()):
                 variableList.append(spss.GetVariableName(t))
             for t in range(len(datasetLabels)):
-                if ("label{0}".format(str(t)) not in variableList):
+                if "label{0}".format(str(t)) not in variableList:
                     datasetObj.varlist.append("label{0}".format(str(t)), 50)
             spss.EndDataStep()
 
-# Alter numeric variable types
+            # Alter numeric variable types
             submitstring = """alter type N (f8.0).
-    alter type percent validpercent cumulativepercent (f8.1)."""
+alter type percent validpercent cumulativepercent (f8.1)."""
             spss.Submit(submitstring)
 
-# Determine values for dataset
+        # Determine values for dataset
         dataValues = []
         for t in range(len(curvalues)):
             rowList = [curvalues[t]]
-            if (valueList != []):
+            if valueList != []:
                 rowList.extend(valueList[combo])
             rowList.append(fList[t])
             rowList.append(pList[t])
@@ -214,19 +205,27 @@ dataset name {1}.""".format(dsetname, datasetName)
             rowList.extend(datasetLabels)
             dataValues.append(rowList)
 
-# Put values in dataset
+        # Put values in dataset
         spss.StartDataStep()
-        datasetObj = spss.Dataset(name = datasetName)
+        datasetObj = spss.Dataset(name=datasetName)
         for t in dataValues:
             datasetObj.cases.append(t)
         spss.EndDataStep()
 
-# Return to original data set
+        # Return to original data set
         spss.StartDataStep()
-        datasetObj = spss.Dataset(name = activeName)
+        datasetObj = spss.Dataset(name=activeName)
         spss.SetActive(datasetObj)
         spss.EndDataStep()
-
-end program python.
+end program python3.
 set printback on.
-COMMENT BOOKMARK;LINE_NUM=134;ID=1.
+
+*******
+* Version History
+*******
+* 2016-12-02 Created
+* 2016-12-02a Modified to work with crosstabs
+* 2016-12-02b Added combinations of extra variables
+* 2016-12-03 Obtained levels of first variable separately for 
+*    each combination of the other variables
+* 2024-05-29 Converted to Python 3
